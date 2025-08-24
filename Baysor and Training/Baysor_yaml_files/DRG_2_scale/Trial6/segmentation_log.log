@@ -1,0 +1,27 @@
+[20:22:32] Info: Run Re3b921fa3
+[20:22:32] Info: (2025-05-19) Run Baysor v0.6.2
+[20:22:32] Info: Loading data...
+[20:22:42] Info: Excluding genes: ADCYAP1, ADRA2C, AGT, ALPL, APOE, ATF3, ATP2B4, CACNA2D1, CACNA2D2, CALCA, CALCB, CASQ2, CCK, CD74, CDH1, CHRNA3, CHRNA7, CPNE4, CST3, DCN, DOC2A, EDNRA, EHD3, ENTPD3, FABP7, GFRA2, GFRA3, GLDN, GPR68, HRH1, HRH2, HTR3A, IGFBP7, IL31RA, INA, KCNA4, KCND1, KCNG4, KCNV1, KIT, MGP, MPZ, MRGPRD, MRGPRX1, MRGPRX3, MRGPRX4, NEFH, NEFL, NMB, NPPB, NTRK1, NTRK2, NTRK3, OPRD1, OPRK1, OPRM1, OSMR, P2RY1, PCDH7, PCP4, PDGFRA, PIEZO1, PIEZO2, PLCB3, POU4F1, PRDM12, PTGDR, PTGER3, PTGIR, PTPRC, PVALB, REEP5, RET, S100A16, S100A4, SCG2, SCG3, SCN10A, SCN11A, SCN7A, SCN9A, SCRG1, SEMA6A, SERPINA1, SFRP1, SLC17A6, SLC17A7, SLC17A8, SST, STUM, SYP, TAC1, TINAGL1, TMEM273, TRPA1, TRPM8, TRPV1, UCN, WLS
+[20:22:42] Info: Loaded 239071 transcripts
+[20:22:43] Info: Estimating noise level
+[20:22:49] Info: Done
+[20:23:05] Info: Clustering molecules...
+[20:23:07] Warning: ICA did not converge, fall back to random initialization
+└ Baysor.Processing /home/yhs/.julia/packages/Baysor/nJ00T/src/processing/bmm_algorithm/molecule_clustering.jl:147
+[20:23:10] Info: Algorithm stopped after 21 iterations. Error: 0.000782. Converged: true.
+[20:23:10] Info: Done
+[20:23:10] Info: Initializing algorithm. Scale: 10.0, scale std: 1.5, initial #components: 4780, #molecules: 239071.
+[20:23:11] Info: Using the following additional information about molecules: [:confidence, :cluster]
+[20:23:11] Info: Using 3D coordinates
+[20:24:29] Info: Processing complete.
+[20:24:30] Info: Estimating local colors
+[20:26:31] Info: Estimating boundary polygons
+[20:26:34] Warning: To many values of z. Using 2D polygons
+└ Baysor.Processing /home/yhs/.julia/packages/Baysor/nJ00T/src/processing/data_processing/boundary_estimation.jl:143
+[20:26:34] Info: Saving results to /media/yhs/5596744f-db7c-442f-9235-d0c9d50c0a6b/Xenium_segementation/Baysor/DRG_2_scale/Trial6/segmentation.csv
+[20:26:41] Info: Plotting results
+[20:26:44] Info: Plot diagnostics
+[20:26:46] Info: Plot transcript assignment
+[20:26:47] Warning: Keyword argument `bgcolor` is deprecated, use `backgroundcolor` instead.
+└ Makie /home/yhs/.julia/packages/Makie/RgxaV/src/makielayout/blocks/legend.jl:23
+[20:26:49] Info: All done!

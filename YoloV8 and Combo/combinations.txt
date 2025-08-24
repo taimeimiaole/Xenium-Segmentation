@@ -1,0 +1,5 @@
+Unet, vgg16_bn, imagenet
+Unet, vgg19,imagenet
+MAnet, vgg16_bn, imagenet
+
+

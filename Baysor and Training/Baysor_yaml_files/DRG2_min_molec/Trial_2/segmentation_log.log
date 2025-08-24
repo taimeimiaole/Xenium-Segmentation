@@ -1,0 +1,25 @@
+[15:40:27] Info: Run R5fe5441f4
+[15:40:27] Info: (2025-03-21) Run Baysor v0.6.2
+[15:40:27] Info: Loading data...
+[15:40:36] Info: Excluding genes: ADCYAP1, ADRA2C, AGT, ALPL, APOE, ATF3, ATP2B4, CACNA2D1, CACNA2D2, CALCA, CALCB, CASQ2, CCK, CD74, CDH1, CHRNA3, CHRNA7, CPNE4, CST3, DCN, DOC2A, EDNRA, EHD3, ENTPD3, FABP7, GFRA2, GFRA3, GLDN, GPR68, HRH1, HRH2, HTR3A, IGFBP7, IL31RA, INA, KCNA4, KCND1, KCNG4, KCNV1, KIT, MGP, MPZ, MRGPRD, MRGPRX1, MRGPRX3, MRGPRX4, NEFH, NEFL, NMB, NPPB, NTRK1, NTRK2, NTRK3, OPRD1, OPRK1, OPRM1, OSMR, P2RY1, PCDH7, PCP4, PDGFRA, PIEZO1, PIEZO2, PLCB3, POU4F1, PRDM12, PTGDR, PTGER3, PTGIR, PTPRC, PVALB, REEP5, RET, S100A16, S100A4, SCG2, SCG3, SCN10A, SCN11A, SCN7A, SCN9A, SCRG1, SEMA6A, SERPINA1, SFRP1, SLC17A6, SLC17A7, SLC17A8, SST, STUM, SYP, TAC1, TINAGL1, TMEM273, TRPA1, TRPM8, TRPV1, UCN, WLS
+[15:40:36] Info: Loaded 239071 transcripts
+[15:40:38] Info: Estimating noise level
+[15:40:53] Info: Done
+[15:41:09] Info: Clustering molecules...
+[15:41:18] Info: Algorithm stopped after 135 iterations. Error: 0.0088. Converged: true.
+[15:41:19] Info: Done
+[15:41:19] Info: Initializing algorithm. Scale: 15.0, scale std: 2.25, initial #components: 596, #molecules: 239071.
+[15:41:19] Info: Using the following additional information about molecules: [:confidence, :cluster]
+[15:41:19] Info: Using 3D coordinates
+[15:42:20] Info: Processing complete.
+[15:42:21] Info: Estimating local colors
+[15:43:50] Info: Estimating boundary polygons
+[15:43:53] Warning: To many values of z. Using 2D polygons
+└ Baysor.Processing /home/yhs/.julia/packages/Baysor/nJ00T/src/processing/data_processing/boundary_estimation.jl:143
+[15:43:53] Info: Saving results to /media/yhs/5596744f-db7c-442f-9235-d0c9d50c0a6b/Xenium_segementation/Baysor/Trial_2/segmentation.csv
+[15:44:00] Info: Plotting results
+[15:44:04] Info: Plot diagnostics
+[15:44:05] Info: Plot transcript assignment
+[15:44:06] Warning: Keyword argument `bgcolor` is deprecated, use `backgroundcolor` instead.
+└ Makie /home/yhs/.julia/packages/Makie/RgxaV/src/makielayout/blocks/legend.jl:23
+[15:44:08] Info: All done!

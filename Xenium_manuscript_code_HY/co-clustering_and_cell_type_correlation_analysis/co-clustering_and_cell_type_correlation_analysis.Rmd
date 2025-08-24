@@ -1,0 +1,868 @@
+---
+title: "hDRG datasets comparison"
+author: "H. Yu"
+date: "8/5/2023"
+output: html_document
+---
+
+```{r}
+library(Seurat)
+library(gplots)
+library(heatmaply)
+```
+
+```{r}
+# read datasets
+
+Xenium_segementation_manual <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/GSE273557_hDRG_gene_expression_matrix.csv", row.names = 1)
+
+Xenium_segementation_manual_metadata <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/GSE273557_hDRG_gene_expression_matrix_metadata.csv", row.names = 1)
+
+Xenium_segementation_cellpose <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/CellposeST_prediction_gene_expression_matrix_neuron_marker.csv", row.names = 1)
+
+Xenium_segementation_cellpose_metadata <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/CellposeST_prediction_gene_expression_matrix_metadata.csv", row.names = 1)
+
+Xenium_segementation_yolo <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/yoloST_prediction_gene_expression_matrix_neuron_marker.csv", row.names = 1)
+
+Xenium_segementation_yolo_metadata <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/yoloST_prediction_gene_expression_matrix_metadata.csv", row.names = 1)
+
+
+
+```
+
+
+```{r}
+Xenium_segementation_manual_1 <- CreateSeuratObject(counts = Xenium_segementation_manual, meta.data = Xenium_segementation_manual_metadata)
+
+Xenium_segementation_cellpose_1  <- CreateSeuratObject(counts = Xenium_segementation_cellpose, meta.data = Xenium_segementation_cellpose_metadata)
+
+Xenium_segementation_yolo_1 <- CreateSeuratObject(counts = Xenium_segementation_yolo, meta.data = Xenium_segementation_yolo_metadata)
+
+
+```
+
+```{r}
+hDRG_list <- list(Xenium_segementation_manual_1 = Xenium_segementation_manual_1, Xenium_segementation_cellpose_1 = Xenium_segementation_cellpose_1, Xenium_segementation_yolo_1 = Xenium_segementation_yolo_1)
+
+```
+
+```{r}
+for (i in 1:length(hDRG_list)) {
+    hDRG_list[[i]] <- NormalizeData(hDRG_list[[i]], normalization.method = "LogNormalize", scale.factor = 10000)
+    hDRG_list[[i]] <- FindVariableFeatures(hDRG_list[[i]], selection.method = "vst", nfeatures = 100,
+        verbose = FALSE)
+}
+```
+
+
+```{r}
+Xenium_segementation_manual_1 <- ScaleData(hDRG_list[["Xenium_segementation_manual_1"]])
+Xenium_segementation_manual_1 <- RunPCA(Xenium_segementation_manual_1, features = VariableFeatures(object = Xenium_segementation_manual_1))
+Xenium_segementation_manual_1 <- FindNeighbors(Xenium_segementation_manual_1, dims = 1:10, verbose = TRUE)
+Xenium_segementation_manual_1<- FindClusters(Xenium_segementation_manual_1, resolution = 2.5, verbose = TRUE)
+Xenium_segementation_manual_1 <- RunUMAP(Xenium_segementation_manual_1, dims = 1:10)
+```
+
+```{r}
+manual <- DimPlot(Xenium_segementation_manual_1, reduction = "umap", label = TRUE)
+manual
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/manual_UMAP_plot.svg", plot = manual, width = 6, height = 4, units = "in", dpi = 300)
+
+```
+```{r}
+
+# Define your custom cluster order
+new_order <- c("16", "0", "5", "15", "3", "1", "2", "4", "7", "9", "10", "6", "13", "8", "12", "14", "11")
+
+# Create a temporary reordered cluster label for plotting only
+Xenium_segementation_manual_1$cluster_reordered <- factor(
+  Xenium_segementation_manual_1$seurat_clusters,
+  levels = new_order
+)
+
+# Find all markers based on original clusters
+markers <- FindAllMarkers(
+  Xenium_segementation_manual_1,
+  only.pos = TRUE,
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+# For each cluster, get top 10 genes by avg_log2FC
+top10 <- markers %>%
+  group_by(cluster) %>%
+  slice_max(order_by = avg_log2FC, n = 3)
+
+# Make sure cluster is a factor with the specified order
+top10$cluster <- factor(top10$cluster, levels = new_order)
+
+# Sort genes by cluster and avg_log2FC
+top10 <- top10 %>%
+  arrange(cluster, desc(avg_log2FC))
+
+# Plot the heatmap using the reordered cluster and gene order
+heatmap <- DoHeatmap(
+  Xenium_segementation_manual_1,
+  features = top10$gene,
+  group.by = "cluster_reordered"
+) + NoLegend()
+
+heatmap
+
+ggsave(
+  filename = "C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/Xenium_manual_heatmap.svg",
+  plot = heatmap,
+  device = "svg",
+  width = 10,       # adjust as needed
+  height = 8,
+  units = "in"
+)
+```
+
+
+
+```{r}
+Xenium_segementation_cellpose_1 <- ScaleData(hDRG_list[["Xenium_segementation_cellpose_1"]])
+Xenium_segementation_cellpose_1 <- RunPCA(Xenium_segementation_cellpose_1, features = VariableFeatures(object = Xenium_segementation_cellpose_1))
+Xenium_segementation_cellpose_1 <- FindNeighbors(Xenium_segementation_cellpose_1, dims = 1:10, verbose = TRUE)
+Xenium_segementation_cellpose_1<- FindClusters(Xenium_segementation_cellpose_1, resolution = 2.54, verbose = TRUE)
+Xenium_segementation_cellpose_1 <- RunUMAP(Xenium_segementation_cellpose_1, dims = 1:10)
+```
+```{r}
+cellpose <- DimPlot(Xenium_segementation_cellpose_1 , reduction = "umap", label = TRUE)
+cellpose
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/cellposeST_UMAP_plot.svg", plot = cellpose, width = 6, height = 4, units = "in", dpi = 300)
+```
+
+```{r}
+
+# Define your custom cluster order
+new_order <- c("15", "1", "11", "14", "13", "6", "17", "0", "2", "4", "8",  "9", "7", "5", "12", "10", "3", "16")
+
+# Create a temporary reordered cluster label for plotting only
+Xenium_segementation_cellpose_1$cluster_reordered <- factor(
+  Xenium_segementation_cellpose_1$seurat_clusters,
+  levels = new_order
+)
+
+# Find all markers based on original clusters
+markers <- FindAllMarkers(
+  Xenium_segementation_cellpose_1,
+  only.pos = TRUE,
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+# For each cluster, get top 10 genes by avg_log2FC
+top10 <- markers %>%
+  group_by(cluster) %>%
+  slice_max(order_by = avg_log2FC, n = 3)
+
+# Make sure cluster is a factor with the specified order
+top10$cluster <- factor(top10$cluster, levels = new_order)
+
+# Sort genes by cluster and avg_log2FC
+top10 <- top10 %>%
+  arrange(cluster, desc(avg_log2FC))
+
+# Plot the heatmap using the reordered cluster and gene order
+heatmap <- DoHeatmap(
+  Xenium_segementation_cellpose_1,
+  features = top10$gene,
+  group.by = "cluster_reordered"
+) + NoLegend()
+
+heatmap
+
+ggsave(
+  filename = "C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/Xenium_cellpose_heatmap.svg",
+  plot = heatmap,
+  device = "svg",
+  width = 10,       # adjust as needed
+  height = 8,
+  units = "in"
+)
+```
+
+
+
+```{r}
+Xenium_segementation_yolo_1 <- ScaleData(hDRG_list[["Xenium_segementation_yolo_1"]])
+Xenium_segementation_yolo_1 <- RunPCA(Xenium_segementation_yolo_1, features = VariableFeatures(object = Xenium_segementation_yolo_1))
+Xenium_segementation_yolo_1  <- FindNeighbors(Xenium_segementation_yolo_1 , dims = 1:10, verbose = TRUE)
+Xenium_segementation_yolo_1 <- FindClusters(Xenium_segementation_yolo_1 , resolution = 3, verbose = TRUE)
+Xenium_segementation_yolo_1 <- RunUMAP(Xenium_segementation_yolo_1, dims = 1:10)
+```
+```{r}
+yolo <- DimPlot(Xenium_segementation_yolo_1, reduction = "umap", label = TRUE)
+yolo
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/yoloST_UMAP_plot.svg", plot = yolo, width = 6, height = 4, units = "in", dpi = 300)
+
+
+```
+```{r}
+
+# Define your custom cluster order
+new_order <- c("15", "3", "10", "13", "14", "4", "0", "1", "7", "6", "2",  "5", "8", "12", "11", "9", "16")
+
+# Create a temporary reordered cluster label for plotting only
+Xenium_segementation_yolo_1$cluster_reordered <- factor(
+  Xenium_segementation_yolo_1$seurat_clusters,
+  levels = new_order
+)
+
+# Find all markers based on original clusters
+markers <- FindAllMarkers(
+  Xenium_segementation_yolo_1,
+  only.pos = TRUE,
+  min.pct = 0.25,
+  logfc.threshold = 0.25
+)
+
+# For each cluster, get top 10 genes by avg_log2FC
+top10 <- markers %>%
+  group_by(cluster) %>%
+  slice_max(order_by = avg_log2FC, n = 3)
+
+# Make sure cluster is a factor with the specified order
+top10$cluster <- factor(top10$cluster, levels = new_order)
+
+# Sort genes by cluster and avg_log2FC
+top10 <- top10 %>%
+  arrange(cluster, desc(avg_log2FC))
+
+# Plot the heatmap using the reordered cluster and gene order
+heatmap <- DoHeatmap(
+  Xenium_segementation_yolo_1,
+  features = top10$gene,
+  group.by = "cluster_reordered"
+) + NoLegend()
+
+heatmap
+
+ggsave(
+  filename = "C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/Xenium_yolo_heatmap.svg",
+  plot = heatmap,
+  device = "svg",
+  width = 10,       # adjust as needed
+  height = 8,
+  units = "in"
+)
+```
+
+```{r}
+Xenium_segementation_manual_1$seurat_clusters <- as.factor(Xenium_segementation_manual_1$seurat_clusters)
+
+Xenium_segementation_cellpose_1$seurat_clusters <- as.factor(Xenium_segementation_cellpose_1$seurat_clusters)
+
+Xenium_segementation_yolo_1$seurat_clusters <- as.factor(Xenium_segementation_yolo_1$seurat_clusters)
+```
+
+
+
+
+##=========================================================================
+##Figure plot 
+
+#Figure 3
+### comparision with manual and cellpose
+
+```{r}
+hDRG.query <- Xenium_segementation_cellpose_1
+hDRG.anchors <- FindTransferAnchors(reference = Xenium_segementation_manual_1, query = hDRG.query, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = Xenium_segementation_manual_1$seurat_clusters)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$seurat_clusters))
+hDRG.reference_cluster <- unique(unname(Xenium_segementation_manual_1$seurat_clusters))
+hDRG.reference_cluster <- gsub("/", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$seurat_clusters=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$seurat_clusters==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$seurat_clusters==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the seurat_clusters_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+comparison_list$query_celltype[[160]]
+comparison_list$reference_celltype[[160]]
+mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/Xenium_segmentation_manual_cellpose.csv" )
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+
+# Load the heatmaply library
+library(heatmaply)
+
+# Ensure empty_df is defined
+# Example:
+# empty_df <- data.frame(matrix(runif(100), nrow=10))
+
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create an interactive heatmap and save as HTML
+heatmaply(rearranged_matrix)
+
+
+   
+
+
+
+
+```
+
+
+#Figure 3A
+```{r}
+# Define the custom order for rows and columns based on the image
+row_order <- c("11", "14","0", "2", "6", "17","4","1","5","8", "10", "9", "7", "16", "3", "12", "13","15")
+
+col_order <- c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13","14", "15", "16")
+
+# Reorder the DataFrame according to the specified order
+empty_df <- empty_df[row_order, col_order]
+
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+heatmaply(rearranged_matrix, dendrogram="none")
+
+```
+
+
+
+
+
+
+##=========================================================================
+##Figure plot 
+
+#Figure 3
+### comparision with manual and yolo
+
+```{r}
+hDRG.query <- Xenium_segementation_yolo_1
+hDRG.anchors <- FindTransferAnchors(reference = Xenium_segementation_manual_1, query = hDRG.query, reference.reduction = "pca")
+predictions <- TransferData(anchorset = hDRG.anchors, refdata = Xenium_segementation_manual_1$seurat_clusters)
+hDRG.query <- AddMetaData(hDRG.query, metadata = predictions)
+```
+
+
+```{r}
+hDRG.query_cluster <- unique(unname(hDRG.query$seurat_clusters))
+hDRG.reference_cluster <- unique(unname(Xenium_segementation_manual_1$seurat_clusters))
+hDRG.reference_cluster <- gsub("/", ".", hDRG.reference_cluster)
+
+query_name_list <- list()
+reference_name_list <- list()
+df_list <- list()
+
+for (query_cluster in hDRG.query_cluster) {
+  for (reference_cluster in hDRG.reference_cluster) {
+    # Create the my_vector for each combination of query_cluster and reference_cluster
+    query_name = query_cluster
+    reference_name = reference_cluster
+    
+   #my_vector <-c(x = unname(hDRG.query[,hDRG.query$seurat_clusters=="H7"]$prediction.score.hPEP.0))
+   #df <- data.frame(Value = my_vector)
+                     
+    #df = data.frame(c(x=unname(hDRG.query[,hDRG.query$seurat_clusters==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1])))
+                     
+    df = data.frame(value=unlist(hDRG.query[,hDRG.query$seurat_clusters==query_cluster][[]][paste0("prediction.score.",reference_cluster)][,1]))
+    
+    
+    # Append the data frame to the seurat_clusters_comparison list
+    query_name_list <- append(query_name_list, query_name)
+    reference_name_list <- append(reference_name_list,  reference_name)
+    df_list <- append(df_list,  df)
+  }
+}
+
+comparison_list = list(query_celltype=query_name_list, reference_celltype=reference_name_list, value=df_list)
+
+# Print the list of data frames
+
+```
+
+
+
+```{r, fig.width=3, fig.height=3}
+# Load the necessary library
+library(ggplot2)
+
+# Assuming you have a list of X ggplot objects (ggplot1, ggplot2, ..., ggplotX)
+X <- length(hDRG.query_cluster)*length(hDRG.reference_cluster)  # Replace 'X' with the number of ggplot objects you have
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+for (i in seq_along(comparison_list$value)) {
+  df <- data.frame(Value = unlist(comparison_list$value[i]))
+  p <- ggplot(df, aes(x = "", y = Value)) +
+    geom_violin(fill = "skyblue") +
+    scale_y_continuous(name = comparison_list$query_celltype[i], limits = c(0, 1)) +
+    xlab(comparison_list$reference_celltype[i]) +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, size = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+  
+  A[[i]] <- p
+}
+
+#ggplot_list <- append(ggplot_list,plot)
+
+```
+
+
+```{r, fig.width=30, fig.height=30}
+
+### generate the heatmap matrix
+
+
+M <- length(hDRG.query_cluster)  # Replace 'M' with the desired number of rows in the grid
+N <- length(hDRG.reference_cluster)   # Replace 'N' with the desired number of columns in the grid
+
+# Combine the ggplot objects into a single list
+A <- list()
+
+# Create ggplot plots and store them in the list A using a for loop
+
+comparison_list$query_celltype[[160]]
+comparison_list$reference_celltype[[160]]
+mean(comparison_list$value[[150]])
+#ggplot_list <- append(ggplot_list,plot)
+
+
+
+
+# Define the row names (a, b, c, d, ...)
+row_names <- hDRG.query_cluster # Change 4 to the desired number of rows
+
+# Define the column names (m, n, o, p, ...)
+column_names <- hDRG.reference_cluster # Change 16 to the desired number of columns
+
+# Create an empty data frame with the specified row and column names
+empty_df <- data.frame(matrix(ncol = length(column_names), nrow = length(row_names)))
+rownames(empty_df) <- row_names
+colnames(empty_df) <- column_names
+
+# Assuming ZX is a list with the same length as the number of rows and each element is a vector with the same length as the number of columns
+# Example: ZX <- list(a = c(1, 2, 3, 4), b = c(5, 6, 7, 8), c = c(9, 10, 11, 12), d = c(13, 14, 15, 16))
+
+for (i in 1:length(comparison_list$value)) {
+  empty_df[comparison_list$query_celltype[[i]], comparison_list$reference_celltype[[i]]] <- mean(comparison_list$value[[i]])
+}
+
+print(empty_df)
+
+write.csv(empty_df, "C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/Xenium_segmentation_manual_yolo.csv" )
+
+```
+
+
+```{r, fig.width=7, fig.height=7}
+
+# Load the heatmaply library
+library(heatmaply)
+
+# Ensure empty_df is defined
+# Example:
+# empty_df <- data.frame(matrix(runif(100), nrow=10))
+
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+# Create an interactive heatmap and save as HTML
+heatmaply(rearranged_matrix)
+
+
+   
+
+
+
+
+```
+
+
+#Figure 3A
+```{r}
+# Define the custom order for rows and columns based on the image
+row_order <- c("13", "10", "0", "1", "4", "7", "3", "12", "6", "11", "2", "5", "16", "9","8", "14", "15")
+
+col_order <- c("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13","14", "15", "16")
+
+# Reorder the DataFrame according to the specified order
+empty_df <- empty_df[row_order, col_order]
+
+# Convert the DataFrame to a matrix
+rearranged_matrix <- as.matrix(empty_df)
+
+heatmaply(rearranged_matrix, dendrogram="none", plot_method = "plotly")
+
+
+
+
+```
+
+
+
+
+
+```{r}
+# 1. Define the mapping for yolo clusters
+cluster_to_label <- c(
+  "0" = "hPEP.TRPV1/A1.1",
+  "1" = "hPEP.TRPV1/A1.2",
+  "2" = "hPEP.CHNRA7",
+  "3" = "hNP1",
+  "4" = "hSST",
+  "5" = "hPEP.NTRK3",
+  "6" = "hPEP.KIT",
+  "7" = "hPEP.PIEZOh",
+  "8" = "hAd.LTMNR",
+  "9" = "hPropr",
+  "10" = "hNP1",
+  "11" = "hAb.LTMR",
+  "12" = "hAd.LTMR",
+  "13" = "hNP1",
+  "14" = "hNP2",
+  "15" = "hTRPM8",
+  "16" = "discard"
+)
+
+# 2. Convert to character
+Xenium_segementation_yolo_1@meta.data$seurat_clusters <- as.character(Xenium_segementation_yolo_1@meta.data$seurat_clusters)
+
+# 3. Add new column to metadata using mapping
+Xenium_segementation_yolo_1@meta.data$corresponding_annotation <- cluster_to_label[Xenium_segementation_yolo_1@meta.data$seurat_clusters]
+
+```
+
+
+```{r}
+# Extract metadata
+meta_df <- Xenium_segementation_yolo_1@meta.data
+
+# Save to CSV
+write.csv(meta_df, file = "C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/yoloST_prediction_gene_expression_matrix_metadata_seurat.csv", row.names = TRUE)
+```
+
+
+
+
+```{r}
+
+# 1. Define the mapping for cellpose clusters
+cellpose_to_label <- list(
+  "0" = "hPEP.TRPV1/A1.1",
+  "1" = "hNP1",
+  "2" = "hPEP.TRPV1/A1.2",
+  "3" = "hPropr",
+  "4" = "hPEP.PIEZOh",
+  "5" = "hAd.LTMR",  # note: originally both hSST and hAd.LTMNR for 6 — keep the latest from your image
+  "6" = "hSST",
+  "7" = "hPEP.NTRK3",
+  "8" = "hPEP.KIT",
+  "9" = "hPEP.CHRNA7",
+  "10" = "hAb.LTMR",
+  "11" = "hNP1",       # part of "11 & 14"
+  "12" = "hAd.LTMNR",
+  "13" = "hNP2",
+  "14" = "hNP1",       # part of "11 & 14"
+  "15" = "hTRPM8",
+  "16" = "discard",
+  "17" = "hSST"
+)
+
+# 2. Convert seurat_clusters (from Cellpose run) to character
+Xenium_segementation_cellpose_1@meta.data$seurat_clusters <- as.character(Xenium_segementation_cellpose_1@meta.data$seurat_clusters)
+
+# 3. Assign new annotations
+Xenium_segementation_cellpose_1@meta.data$corresponding_annotation <- cellpose_to_label[Xenium_segementation_cellpose_1@meta.data$seurat_clusters]
+
+```
+
+```{r}
+# Extract metadata
+meta_df <- Xenium_segementation_cellpose_1@meta.data
+
+# Convert list columns to character strings
+meta_df[] <- lapply(meta_df, function(x) {
+  if (is.list(x)) sapply(x, toString) else x
+})
+
+# Write to CSV
+write.csv(meta_df, file = "C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/CellposeST_prediction_gene_expression_matrix_metadata_seurat.csv", row.names = TRUE)
+
+```
+
+
+
+```{r}
+
+# 1. Define mapping for manual clusters
+manual_to_label <- c(
+  "0" = "hNP1",
+  "1" = "hPEP.TRPV1/A1.1",
+  "2" = "hPEP.TRPV1/A1.2",
+  "3" = "hSST",
+  "4" = "hPEP.PIEZOh",
+  "5" = "hNP1",
+  "6" = "hAd.LTMR",
+  "7" = "hPEP.KIT",
+  "8" = "hAb.LTMR",
+  "9" = "hPEP.CHRNA7",
+  "10" = "hPEP.NTRK3",
+  "11" = "discard",
+  "12" = "hPropr",
+  "13" = "hAd.LTMNR",
+  "14" = "hPEP0",
+  "15" = "hNP2",
+  "16" = "hTRPM8"
+)
+
+# 2. Convert 'seurat_clusters' to character to match mapping keys
+Xenium_segementation_manual_1@meta.data$seurat_clusters <- as.character(Xenium_segementation_manual_1@meta.data$seurat_clusters)
+
+# 3. Apply mapping to create new annotation column
+Xenium_segementation_manual_1@meta.data$corresponding_annotation <- manual_to_label[Xenium_segementation_manual_1@meta.data$seurat_clusters]
+
+
+```
+
+
+```{r}
+# Extract metadata
+meta_df <- Xenium_segementation_manual_1@meta.data
+
+# Save to CSV
+write.csv(meta_df, file ="C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/GSE273557_hDRG_gene_expression_matrix_metadata_seurat.csv" , row.names = TRUE)
+```
+
+
+
+
+## Co-clustering
+
+```{r}
+library(Seurat)
+library(dplyr)
+library(ggplot2)
+
+# Load data
+expr_manual <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/GSE273557_hDRG_gene_expression_matrix.csv", row.names = 1)
+meta_manual <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/GSE273557_hDRG_gene_expression_matrix_metadata.csv", row.names = 1)
+
+expr_cellpose <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/CellposeST_prediction_gene_expression_matrix_neuron_marker.csv", row.names = 1)
+meta_cellpose <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/CellposeST_prediction_gene_expression_matrix_metadata.csv", row.names = 1)
+
+expr_yolo <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/yoloST_prediction_gene_expression_matrix_neuron_marker.csv", row.names = 1)
+meta_yolo <- read.csv("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/yoloST_prediction_gene_expression_matrix_metadata.csv", row.names = 1)
+
+# Create Seurat objects
+seurat_manual <- CreateSeuratObject(counts = expr_manual, meta.data = meta_manual)
+seurat_manual$source <- "Manual"
+
+seurat_cellpose <- CreateSeuratObject(counts = expr_cellpose, meta.data = meta_cellpose)
+seurat_cellpose$source <- "Cellpose"
+
+seurat_yolo <- CreateSeuratObject(counts = expr_yolo, meta.data = meta_yolo)
+seurat_yolo$source <- "YOLO"
+
+# Normalize and find variable features
+seurat_list <- list(seurat_manual, seurat_cellpose, seurat_yolo)
+seurat_list <- lapply(seurat_list, function(x) {
+  x <- NormalizeData(x)
+  x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 87)
+  return(x)
+})
+
+# Integration: find anchors and integrate data
+features <- SelectIntegrationFeatures(object.list = seurat_list)
+anchors <- FindIntegrationAnchors(object.list = seurat_list, anchor.features = features)
+combined <- IntegrateData(anchorset = anchors)
+
+# Standard workflow
+DefaultAssay(combined) <- "integrated"
+combined <- ScaleData(combined)
+combined <- RunPCA(combined, npcs = 30)
+combined <- RunUMAP(combined, dims = 1:20)
+combined <- FindNeighbors(combined, dims = 1:20)
+
+```
+
+```{r, fig.height=4, fig.width=6}
+
+combined <- FindClusters(combined, resolution = 1.05)
+
+# Plot UMAP with source label
+DimPlot(combined, reduction = "umap", group.by = "source", label = FALSE) + ggtitle("UMAP by Segmentation Source")
+DimPlot(combined, reduction = "umap", label = TRUE, pt.size = 0.5) + ggtitle("UMAP with Clusters")
+
+
+```
+```{r}
+
+# Plot UMAP with source label
+s <- DimPlot(combined, reduction = "umap", label = TRUE, pt.size = 0.1) + ggtitle("UMAP with Clusters")
+
+
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/co-clustering_UMAP_plot1.svg", plot = s, width = 6, height = 4, units = "in", dpi = 300)
+
+# Optional: Save object
+# saveRDS(combined, file = "Xenium_combined_coclustered_seurat.rds")
+
+```
+
+
+
+```{r}
+# Step 1: Rename cluster metadata column in each original object to track source
+Xenium_segementation_manual_1$initial_cluster <- Xenium_segementation_manual_1$seurat_clusters
+Xenium_segementation_cellpose_1$initial_cluster <- Xenium_segementation_cellpose_1$seurat_clusters
+Xenium_segementation_yolo_1$initial_cluster <- Xenium_segementation_yolo_1$seurat_clusters
+
+# Step 2: Make sure each cell name is unique (Seurat does this automatically with suffixes if merged via IntegrateData)
+
+# Step 3: Extract initial clusters from each object
+initial_manual <- FetchData(Xenium_segementation_manual_1, vars = "initial_cluster")
+initial_cellpose <- FetchData(Xenium_segementation_cellpose_1, vars = "initial_cluster")
+initial_yolo <- FetchData(Xenium_segementation_yolo_1, vars = "initial_cluster")
+
+# Step 4: Combine all into one data frame
+initial_clusters_combined <- rbind(initial_manual, initial_cellpose, initial_yolo)
+
+# Step 5: Match the merged Seurat object and add initial clusters to its metadata
+combined <- AddMetaData(combined, metadata = initial_clusters_combined)
+
+# You can now view it
+head(combined@meta.data)
+
+```
+
+
+```{r, fig.height=4, fig.width=6}
+# Plot UMAP with source label
+DimPlot(combined, reduction = "umap", group.by = "source", pt.size = 0.1)
+p <-DimPlot(combined, reduction = "umap", group.by = "source", pt.size = 0.1)
+
+ggsave("C:/E/Posdoc work at Upenn/Lab_work/Projects/Xenium segmentation/Xenium segmentation/co-clustering_UMAP_plot2.svg", plot = p, width = 6, height = 4, units = "in", dpi = 300)
+
+# Optional: Save object
+# saveRDS(combined, file = "Xenium_combined_coclustered_seurat.rds")
+
+```
+
+
+
+
+
+
+

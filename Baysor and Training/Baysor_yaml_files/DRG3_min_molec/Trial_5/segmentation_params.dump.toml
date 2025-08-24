@@ -1,0 +1,29 @@
+# CLI params: `-x x_location -y y_location -z z_location --save-polygons=geojson -c /media/yhs/5596744f-db7c-442f-9235-d0c9d50c0a6b/Xenium_segementation/Baysor/Trial_5/config.toml -g feature_name -o /media/yhs/5596744f-db7c-442f-9235-d0c9d50c0a6b/Xenium_segementation/Baysor/Trial_5 -p --prior-segmentation-confidence 0.0 /media/yhs/5596744f-db7c-442f-9235-d0c9d50c0a6b/Xenium_segementation/Baysor/DRG_3_filtered_transcripts.csv`
+[data]
+x = "x_location"
+y = "y_location"
+z = "z_location"
+gene = "feature_name"
+force_2d = false
+min_molecules_per_gene = 1
+exclude_genes = "APOE, SLC17A6, POU4F1, SYP, FABP7, MPZ, GLDN, SCN7A, DCN, PDGFRA, MGP, ALPL, CD74, PTPRC, IGFBP7, TINAGL1, SLC17A7, SLC17A8, INA, NEFH, CALCA, CALCB, NTRK1, NTRK2, NTRK3, PRDM12, RET, STUM, TRPM8, ENTPD3, CASQ2, SERPINA1, P2RY1, MRGPRX1, SCN11A, CDH1, OSMR, IL31RA, MRGPRX3, MRGPRX4, MRGPRD, GFRA2, SST, CCK, GFRA3, SCRG1, TRPV1, TRPA1, PTGER3, TAC1, ATP2B4, KIT, TMEM273, DOC2A, CHRNA7, CST3, CPNE4, S100A4, S100A16, PCP4, KCNV1, PCDH7, SFRP1, NEFL, REEP5, WLS, PVALB, ATF3, UCN, SEMA6A, ADCYAP1, PIEZO1, PIEZO2, GPR68, EHD3, SCN9A, SCN10A, OPRD1, OPRM1, OPRK1, CACNA2D1, CACNA2D2, PTGDR, HTR3A, CHRNA3, EDNRA, KCNG4, PLCB3, HRH1, NMB, SCG2, SCG3, NPPB, PTGIR, ADRA2C, AGT, KCND1, KCNA4, HRH2"
+min_molecules_per_cell = 100
+min_molecules_per_segment = 25
+confidence_nn_id = 51
+
+[segmentation]
+scale = 15.0
+scale_std = "15%"
+estimate_scale_from_centers = false
+n_clusters = 6
+prior_segmentation_confidence = 0.0
+iters = 500
+n_cells_init = 0
+nuclei_genes = ""
+cyto_genes = ""
+new_component_weight = 0.2
+new_component_fraction = 0.3
+
+[plotting]
+gene_composition_neigborhood = 0
+min_pixels_per_cell = 15
